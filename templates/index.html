@@ -1,0 +1,144 @@
+<style>
+    .txt {
+        color: white;
+        font-size: 20px;
+        background-color: black;
+        text-align: center;
+    }
+    .button, .input {
+        padding: 10px;
+        text-align: center;
+        background-color: #4CAF50;
+        color: white;
+        font-size: 20px;
+        margin: 4px 2px;
+        border-radius: 5px;
+        vertical-align: middle;
+    }
+    .button {
+    text-align: center;
+    }
+</style>
+<body class="txt">
+    <head>
+        <title >TF-IDF project</title>
+    </head>
+    <h2>TF-IDF project</h2>
+    <fieldset style="border-radius: 12px;">
+        Select text file:
+        <input class = "input" type="file" value="null" id="input_txt">
+        <button class = "button" id="upload_txt_button" type="button" onclick="upload_txt(this)">Upload</button>
+    </fieldset><br>
+    <table id="tfidf_table">
+{#        <tr>#}
+{#            <td>Word</td>#}
+{#        </tr>#}
+    </table>
+</body>
+<script>
+
+function upload(filePath, upload_path, fileInput) {
+    var MAX_FILE_SIZE = 200*1024;
+    var MAX_FILE_SIZE_STR = "200KB";
+
+    if (fileInput.length == 0) {
+        return false;
+    } else if (filePath.length == 0) {
+        alert("File path on server is not set!");
+        return false;
+    }
+    else if (filePath[filePath.length-1] == '/') {
+        alert("File name not specified after path!");
+        return false;
+    }
+    else {
+        var file = fileInput[0];
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (xhttp.readyState == 4) {
+                if (xhttp.status == 200) {
+                    //document.open();
+                    create_html_table(JSON.parse(xhttp.responseText));
+                    //document.close();
+                } else if (xhttp.status == 0) {
+                    alert("Server closed the connection abruptly!");
+                    location.reload();
+                } else {
+                    alert(xhttp.status + " Error!\n" + xhttp.responseText);
+                    location.reload();
+                }
+            }
+        };
+        xhttp.open("POST", upload_path, true);
+        xhttp.send(file);
+        return true;
+    }
+}
+function create_html_table(json_table){
+
+    create_headers();
+    var newRow;
+    var wordCell;
+    var dfCell;
+    var tfidfCell;
+    var wordText;
+    var dfText;
+    var tfidfText;
+    var tfidf_table = document.getElementById("tfidf_table")
+
+    var rowCount = tfidf_table.rows.length;
+    for (var i = 1; i < rowCount; i++) {
+        tfidf_table.deleteRow(1);
+    }
+    for(var i = 0; i < json_table.words.length; i++){
+        newRow = tfidf_table.insertRow(i+1);
+
+        wordCell = newRow.insertCell(0);
+        wordText = document.createTextNode(json_table.words[i]);
+        wordCell.appendChild(wordText);
+
+        dfCell = newRow.insertCell(1);
+        dfText = document.createTextNode(json_table.df[i]);
+        dfCell.appendChild(dfText);
+
+        tfidfCell = newRow.insertCell(2);
+        tfidfText = document.createTextNode(json_table.tfidf[i]);
+        tfidfCell.appendChild(tfidfText);
+    }
+}
+function create_headers(){
+    var tfidf_table = document.getElementById("tfidf_table")
+    var header = tfidf_table.createTHead();
+    var headerRow = header.insertRow(0);
+    var wordsCell = headerRow.insertCell(0);
+    var tfCell = headerRow.insertCell(1);
+    var idfCell = headerRow.insertCell(2);
+    var newText = document.createTextNode("Word");
+    wordsCell.appendChild(newText);
+    var newText = document.createTextNode("TF");
+    tfCell.appendChild(newText);
+    var newText = document.createTextNode("IDF");
+    idfCell.appendChild(newText);
+}
+function upload_txt(button){
+
+    var fileInput = document.getElementById("input_txt").files;
+    if (fileInput.length == 0){
+        alert("No file selected!");
+        return false;
+    }
+    var filePath = document.getElementById("input_txt").files[0].name;
+    filePath = filePath.split(' ').join('_')
+    var upload_path = "/upload/" + filePath
+    alert(upload_path)
+    var ret = upload(filePath, upload_path, fileInput);
+    if (ret == false){
+        document.getElementById("input_txt").value = null;
+        return ret;
+    }
+    document.getElementById("input_txt").value = null;
+
+    alert("File uploaded successfully");
+}
+
+</script>
